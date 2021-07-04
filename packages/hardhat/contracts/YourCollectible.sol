@@ -11,6 +11,35 @@ import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
 
 // GET LISTED ON OPENSEA: https://testnets.opensea.io/get-listed/step-two
 
+interface ERC20Interface {
+    function allowance(address, address) external view returns (uint);
+    function balanceOf(address) external view returns (uint);
+    function approve(address, uint) external;
+    function transfer(address, uint) external returns (bool);
+    function transferFrom(address, address, uint) external returns (bool);
+}
+
+
+interface CETHInterface {
+    function mint() external payable; // For ETH
+    function repayBorrow() external payable; // For ETH
+    function borrowBalanceCurrent(address account) external returns (uint);
+}
+
+interface CTokenInterface {
+    function redeemUnderlying(uint redeemAmount) external returns (uint);
+    function borrow(uint borrowAmount) external returns (uint);
+    function exchangeRateCurrent() external returns (uint);
+    function borrowBalanceCurrent(address account) external returns (uint);
+
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address owner) external view returns (uint256 balance);
+    function allowance(address, address) external view returns (uint);
+    function approve(address, uint) external;
+    function transfer(address, uint) external returns (bool);
+    function transferFrom(address, address, uint) external returns (bool);
+}
+
 contract YourCollectible is ERC721, VRFConsumerBase {
 
     mapping (uint256 => address) public tokenRando;
@@ -24,23 +53,32 @@ contract YourCollectible is ERC721, VRFConsumerBase {
     uint256 public endingBlockNum = 10000;
     uint256 public totalTickets = 0;
 
+    uint256 public randomRoll;
+
     uint256 public randomResult;
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
-    IERC20 private _token;
+
+    //address public contractAddress;
 
     event depositETH(address from, address to, uint256 amount);
 
-    constructor (address token) public VRFConsumerBase(
+    constructor () public VRFConsumerBase(
       0xb3dCcb4Cf7a26f6cf6B120Cf5A73875B7BBc655B, // VRF Coordinator
       0x01BE23585060835E02B77ef475b0Cc51aA1e0709  // LINK Token
     )  ERC721("YourCollectible", "YCB") {
-        _token = IERC20(token); // put in cETH contract address in deploy script
+        //_token = (token); // put in cETH contract address in deploy script
         _setBaseURI("https://ipfs.io/ipfs/");
 
         keyHash = 0x2ed0feb3e7fd2022120aa84fab1945545a9f2ffc9076fd6156fa96eaff4c1311;
         fee = 0.1 * 10 ** 18; // 0.1 LINK
+
+        //contractAddress = address.this;
+    }
+
+    function getCETHAddress() public pure returns (address cEth) {
+        cEth = 0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5; // change to rinkeby CETH adddy
     }
 
   function getRandomNumber(uint256 userProvidedSeed) public returns (bytes32 requestId) {
@@ -59,7 +97,9 @@ contract YourCollectible is ERC721, VRFConsumerBase {
     require(bankLogic[msg.sender] != 1); // not sure if this is a valid check... assuming the address is unique it should never return 1 I think
     require(msg.value == 1 * 10 ** 18, "We only accept deposits of 1 ETH at this time");
 
-    _token.mint(msg.value);
+    //_token.transfer(msg.sender, msg.value);
+    CETHInterface cToken = CETHInterface(getCETHAddress());
+    cToken.mint.value(msg.value)();
 
     for(uint256 i=0;i<mintMultiplier;i++){
       _tokenIds.increment();
@@ -69,8 +109,27 @@ contract YourCollectible is ERC721, VRFConsumerBase {
 
     bankLogic[msg.sender] = 1;  // sets a flag within bankLogic as false to signify that a deposit has been made
 
-    emit depositETH(from, to, amount);
+    //emit depositETH(from, to, amount);
 
+   }
+
+   function setApproval(address erc20, uint srcAmt, address to) internal {
+       ERC20Interface erc20Contract = ERC20Interface(erc20);
+       uint tokenAllowance = erc20Contract.allowance(address(this), to);
+       if (srcAmt > tokenAllowance) {
+           erc20Contract.approve(to, 2**255);
+       }
+   }
+
+   function redeemEth() internal {
+       CTokenInterface cToken = CTokenInterface(getCETHAddress());
+
+       address contractAddress = address(this);
+
+       uint256 totalCETH = cToken.balanceOf(contractAddress);
+
+       setApproval(getCETHAddress(), 10**30, getCETHAddress());
+       require(cToken.redeemUnderlying(totalCETH) == 0, "something went wrong");
    }
 
   // Allows winner to claim ***Token URI fed in from the front end when clicking the button****
@@ -78,8 +137,9 @@ contract YourCollectible is ERC721, VRFConsumerBase {
 
     require(tokenRando[randomRoll] == msg.sender, ":( you did not win)");
 
-    uint256 totalCETH = _token.balanceOf(address.this)
-    _token.redeem(totalCETH);
+    //uint256 totalCETH = _token.balanceOf(address.this);
+    //_token.redeem(totalCETH);
+    redeemEth();
 
     _tokenIds.increment();
 
@@ -106,7 +166,7 @@ contract YourCollectible is ERC721, VRFConsumerBase {
     require(diceRolled==false);
     diceRolled == true;
 
-    uint256 randomRoll = uint256( (randomResult % totalTickets)+1 );
+    randomRoll = uint256( (randomResult % totalTickets)+1 );
     return randomRoll;
   }
 
@@ -114,7 +174,7 @@ contract YourCollectible is ERC721, VRFConsumerBase {
     require(block.number > endingBlockNum, "Game not ended yet");
     require(diceRolled == true);
     bankLogic[msg.sender] = 0;  // sets a flag within bankLogic as true to signify that a withdraw has been made
-    transfer(msg.sender,1*10**18);
+    msg.sender.transfer(1*10**18);
 
   }
 
