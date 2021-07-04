@@ -193,7 +193,7 @@
 
 /* About Section */
 .main {
-  background-color: #131313;
+  background-color: #f0efef;
   padding: 10rem 0;
 }
 
@@ -211,14 +211,14 @@
 }
 
 .main__content {
-  color: rgb(253, 253, 253);
+  color: rgb(255, 28, 122);
   width: 100%;
 }
 
 .main__content h1 {
   font-size: 2rem;
   background-color: #fe3b6f;
-  background-image: linear-gradient(to top, #c4a7b4 0%, #ed1a52 100%);
+  background-image: linear-gradient(to top, #fe3b6f 0%, #fe3b6f 100%);
   background-size: 100%;
   -webkit-background-clip: text;
   -moz-background-clip: text;
@@ -233,13 +233,13 @@
   background: #ff8177; /* fallback for old browsers */
   background: -webkit-linear-gradient(
     to right,
-    #9114ff,
-    #da22ff
+    #fe3b6f,
+    #fe3b6f
   ); /* Chrome 10-25, Safari 5.1-6 */
   background: linear-gradient(
     to right,
-    #8f0eff,
-    #da22ff
+    #fe3b6f,
+    #fe3b6f
   ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
   background-size: 100%;
   -webkit-background-clip: text;
@@ -257,8 +257,8 @@
 .main__btn {
   font-size: 1.8rem;
   background: #833ab4;
-  background: -webkit-linear-gradient(to right, #fcb045, #fd1d1d, #833ab4);
-  background: linear-gradient(to right, #fcb045, #fd1d1d, #833ab4);
+  background: -webkit-linear-gradient(to right, #fe3b6f, #fe3b6f, #fe3b6f);
+  background: linear-gradient(to right, #fe3b6f, #fe3b6f, #fe3b6f);
   padding: 20px 60px;
   border: none;
   border-radius: 4px;
@@ -310,7 +310,7 @@
   flex-direction: column;
   justify-content: center;
   /* background-image: linear-gradient(to right, #00dbde 0%, #fc00ff 100%); */
-  background-image: url(https://www.cryptokitties.co/images/kitty-eth.svg);
+  background-image: url(nft.png);
   background-position: center center;
   background-repeat: no-repeat;
 }
